@@ -23,7 +23,7 @@ fn read_file(in_str : String, mut out_str : &mut String ) {
 
 fn print_help() {
     println!("
-Rustfuck
+Rust BrainFuck Interpreter
 
 Usage:
     bf-cli <file>

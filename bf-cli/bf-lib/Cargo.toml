@@ -1,0 +1,6 @@
+[package]
+name = "bf-lib"
+version = "0.1.0"
+authors = ["elliot"]
+
+[dependencies]

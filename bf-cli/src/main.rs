@@ -35,7 +35,6 @@ Usage:
 Options:
     -h --help       Shows this screen.
     -u --usermode   Input is prompted for.
-    -c --charmode   Input is converted from char to byte (A -> 65)
 ");
 }
 
@@ -47,6 +46,7 @@ fn main() {
     let mut input = String::new();
     let mut settings = VMSettings::new();
     for argument in std::env::args() {
+        println!("Mode: {:?}, Arg: {}", mode, argument);
         match mode {
             ArgumentMode::Skip => mode = ArgumentMode::Start,
             ArgumentMode::Start => { 
@@ -58,7 +58,6 @@ fn main() {
                         process::exit(1);
                     },
                     "-u" | "--usermode" => settings.prompt_for_input = true,
-                    "-c" | "--charmode" => settings.input_as_char = true,
                     _ => read_file(argument, &mut input)
                 };
             },

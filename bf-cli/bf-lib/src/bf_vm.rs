@@ -3,6 +3,7 @@ use bf_lexer::*;
 extern crate std;
 use std::io;
 use std::io::Write;
+use std::io::Read;
 
 // Struct for our Virtual Machine that interprets
 //  the Brainfuck tokens
@@ -35,21 +36,12 @@ pub struct VMSettings {
     //  later on. 
     pub prompt_for_input : bool,
 
-    // Controls if input is read as series of
-    //  character numbers or as a char that will 
-    //  be converted to a string.
-    // Examples     true:  '101' => 101
-    //              false: 'A'   => 65
-    //              true:  'A'   => Invalid
-    //              false: '101' => 1nvalid
-    pub input_as_char : bool,
 }
 
 impl VMSettings { 
     pub fn new() -> VMSettings {
         VMSettings {
             prompt_for_input : false,
-            input_as_char : false
         }
     }
 }
@@ -60,8 +52,11 @@ impl VM<BFToken> for BFVM {
     //  the instruction pointer reaches the end
     //  of the token vector.
     fn run(&mut self, data : Vec<BFToken>) -> VMResult {
+        let mut reader = io::stdin();
+        let mut writer = io::stdout();
+
         while self.inst_ptr < data.len() {
-            let result = self.step(&data);
+            let result = self.step(&data, &mut reader, &mut writer);
             match result {
                 VMResult::Success => continue,
                 _ => return result,
@@ -92,7 +87,7 @@ impl BFVM {
     }
 
     // Interprets the current token.
-    pub fn step(&mut self, data : &Vec<BFToken>) -> VMResult {
+    pub fn step(&mut self, data : &Vec<BFToken>, reader : &mut io::Stdin, writer : &mut io::Stdout) -> VMResult {
         // Get the current token
         let token = &data[self.inst_ptr];
 
@@ -111,7 +106,10 @@ impl BFVM {
             BFTokenType::DecrementData => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub(1),
 
             // .    Prints the current cell as a character to stdout (65 - A)
-            BFTokenType::Output => print!("{}", self.mem[self.data_ptr] as u8 as char),
+            BFTokenType::Output => {
+                let data = &[self.mem[self.data_ptr] as u8];
+                writer.write(data).expect("Unable to write to STDOUT");
+            },
 
             // ,    Reads input from stdin and puts it into current cell
             BFTokenType::Input => {
@@ -119,19 +117,9 @@ impl BFVM {
                     print!("\n> ");
                     io::stdout().flush().ok().expect("Could not flush stdout");
                 }
-                let mut input_buffer = String::new();
-                io::stdin().read_line(&mut input_buffer).expect("Failed to read data from stdin");
-                let trimmed = input_buffer.trim();
-
-                if self.settings.input_as_char {
-                    let data = trimmed.chars().nth(0).unwrap() as u8 as i8;
-                    self.mem[self.data_ptr] = data;
-                } else {
-                    match trimmed.parse::<i8>() {
-                        Ok(x) => self.mem[self.data_ptr] = x,
-                        Err(..) => return VMResult::Error { message : String::from("Invalid console input!") }
-                    }
-                }
+                let mut buffer = [0u8; 1];
+                reader.read(&mut buffer[..]).expect("Unable to read from STDIN");
+                self.mem[self.data_ptr] = buffer[0] as i8;
             },
 
             // [     If current data cell is 0 skip to matching ]

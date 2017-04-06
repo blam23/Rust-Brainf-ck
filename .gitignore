@@ -1,4 +1,5 @@
 output.txt
 build.sh
+dbg-bf-cli
 *.sublime-*
 bf-cli/test-scripts/*.bf

@@ -100,10 +100,10 @@ impl BFVM {
             BFTokenType::DecrementPtr(x) => self.data_ptr-=x,
 
             // +    Wrapping adds 1 to cell that data pointer is pointing to
-            BFTokenType::IncrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add(x),
+            BFTokenType::IncrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add((x % 255) as i8),
 
             // -    Wrapping subtracts 1 from cell
-            BFTokenType::DecrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub(x),
+            BFTokenType::DecrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub((x % 255) as i8),
 
             // .    Prints the current cell as a character to stdout (65 - A)
             BFTokenType::Output => {

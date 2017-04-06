@@ -4,8 +4,8 @@ use traits::*;
 pub enum BFTokenType {
     IncrementPtr(usize),      // >
     DecrementPtr(usize),      // <
-    IncrementData(i8),     // +
-    DecrementData(i8),     // -
+    IncrementData(usize),     // +
+    DecrementData(usize),     // -
     Output,                   // .
     Input,                    // ,
     
@@ -68,6 +68,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                             BFTokenType::DecrementPtr(x) => {
                                 tokens.pop();
                                 pos-=1;
+                               
                                 new_x += x;
                             },
                             _ => {}

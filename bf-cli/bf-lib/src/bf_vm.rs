@@ -52,6 +52,9 @@ impl VM<BFToken> for BFVM {
     //  the instruction pointer reaches the end
     //  of the token vector.
     fn run(&mut self, data : Vec<BFToken>) -> VMResult {
+
+        //println!("Tokens: {:?}", data);
+
         let mut reader = io::stdin();
         let mut writer = io::stdout();
 
@@ -136,6 +139,23 @@ impl BFVM {
                 if self.mem[self.data_ptr] != 0 {
                     self.inst_ptr = x;
                 }
+            },
+
+            // Optimisation - Sets current cell to 0
+            BFTokenType::SetCurrent(x) => {
+                self.mem[self.data_ptr] = x;
+            },
+
+            // Optimisation - Adds current cell contents to cell offset by +x
+            BFTokenType::AddCurrentUp(x) => {
+                self.mem[self.data_ptr + x] += self.mem[self.data_ptr];
+                self.mem[self.data_ptr] = 0;
+            },
+
+            // Optimisation - Adds current cell contents to cell offset by -x
+            BFTokenType::AddCurrentDown(x) => {
+                self.mem[self.data_ptr - x] += self.mem[self.data_ptr];
+                self.mem[self.data_ptr] = 0;
             }
         }
         

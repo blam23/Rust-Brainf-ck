@@ -1,6 +1,6 @@
 use traits::*;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Copy)]
 pub enum BFTokenType {
     IncrementPtr(usize),      // >
     DecrementPtr(usize),      // <
@@ -13,10 +13,15 @@ pub enum BFTokenType {
     //  aka LoopStart stores the position of
     //  the matching LoopEnd and vice versa.
     LoopStart(usize),         // [
-    LoopEnd(usize)            // ]
+    LoopEnd(usize),           // ]
+
+    // Optimised instructions
+    SetCurrent(i8),           // Sets the current cell to value
+    AddCurrentUp(usize),      // Adds current cell to cell in [current + value]
+    AddCurrentDown(usize)     // Adds current cell to cell in [current - value]
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct BFToken {
     pub token_type : BFTokenType,
 
@@ -28,6 +33,8 @@ pub struct BFLexer {
 }
 
 impl Lexer<Vec<BFToken>> for BFLexer {
+
+
 
     fn parse(input_string:String) -> LexResult<Vec<BFToken>> {
         // Create empty vector
@@ -41,7 +48,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
         //  so that they can jump to each other in O(1)
         let mut loop_stack : Vec<usize> = vec![];
 
-        let mut last_token = BFToken { pos : 0, token_type : BFTokenType::Input };
+        let mut last_tokens = [BFToken { pos : 0, token_type : BFTokenType::Input }; 5];
 
         // Loop through each character
         for character in input_string.chars() {
@@ -50,8 +57,8 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                 '>' => {
                     // Batch up all the '>' tokens
                     let mut new_x = 1;
-                    if last_token.pos > 0 {
-                        match last_token.token_type {
+                    if last_tokens[0].pos > 0 {
+                        match last_tokens[0].token_type {
                             BFTokenType::IncrementPtr(x) => {
                                 tokens.pop();
                                 pos-=1;
@@ -64,13 +71,12 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                 },
                 '<' => {
                     let mut new_x = 1;
-                    if last_token.pos > 0 {
-                        match last_token.token_type {
+                    if last_tokens[0].pos > 0 {
+                        match last_tokens[0].token_type {
                             BFTokenType::DecrementPtr(x) => {
                                 tokens.pop();
-                                pos-=1;
-                               
-                                new_x += x;
+                                pos-=1;                             
+                                new_x += x;                           
                             },
                             _ => {}
                         }
@@ -79,8 +85,8 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                 },
                 '+' =>  {
                     let mut new_x = 1;
-                    if last_token.pos > 0 {
-                        match last_token.token_type {
+                    if last_tokens[0].pos > 0 {
+                        match last_tokens[0].token_type {
                             BFTokenType::IncrementData(x) => {
                                 tokens.pop();
                                 pos-=1;
@@ -93,8 +99,8 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                 },
                 '-' => {
                     let mut new_x = 1;
-                    if last_token.pos > 0 {
-                        match last_token.token_type {
+                    if last_tokens[0].pos > 0 {
+                        match last_tokens[0].token_type {
                             BFTokenType::DecrementData(x) => {
                                 tokens.pop();
                                 pos-=1;
@@ -116,12 +122,110 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                     BFTokenType::LoopStart(0)
                 },
                 ']' => {
+
                     // Get matching bracket.
                     let index = loop_stack.pop().expect("Bracket mismatch");
+                    let mut ret_token : BFTokenType = BFTokenType::LoopEnd(index);      
+
                     // Update it's data position to this ] token
                     tokens[index].token_type = BFTokenType::LoopStart(pos);
-                    // Store the [ token's position
-                    BFTokenType::LoopEnd(index)
+
+                    match last_tokens[0].token_type {
+                        // This currently checks for [-] or [+] and replaces 
+                        //  those with a set current cell to 0 instruction.
+                        BFTokenType::IncrementData(_) 
+                        | BFTokenType::DecrementData(_) => {
+                            match last_tokens[1].token_type {
+                                BFTokenType::LoopStart(_) => {
+                                    ret_token = BFTokenType::SetCurrent(0);
+                                    tokens.pop();
+                                    tokens.pop();
+                                    pos-=2;
+                                },
+                                _ => { }
+                            }
+                        },
+
+                        //  Optimisation for [-<+>] pattern.
+                        BFTokenType::DecrementPtr(x)  => {
+                            match last_tokens[1].token_type {
+                                BFTokenType::IncrementData(a) => {
+                                    match last_tokens[2].token_type {
+                                        BFTokenType::IncrementPtr(y) => {
+                                             if x == y {
+                                                match last_tokens[3].token_type {
+                                                    BFTokenType::DecrementData(b) => {
+                                                        if a == b {
+                                                            match last_tokens[4].token_type {
+                                                                BFTokenType::LoopStart(_) => {
+                                                                    ret_token = BFTokenType::AddCurrentUp(x);
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    pos-=5;
+                                                                },
+                                                                _ => {}
+                                                            }
+                                                        }
+                                                    },
+                                                    _ => { }
+                                                }
+                                            }
+                                        },
+                                        _ => { }
+                                    }
+                                }, 
+                                _ => { }
+                            };
+                        },
+
+                        //  Optimisation for [->+<] pattern.
+                        BFTokenType::IncrementPtr(x)  => {
+                            match last_tokens[1].token_type {
+                                BFTokenType::IncrementData(a) => {
+                                    match last_tokens[2].token_type {
+                                        BFTokenType::DecrementPtr(y) => {
+                                             if x == y {
+                                                match last_tokens[3].token_type {
+                                                    BFTokenType::DecrementData(b) => {
+                                                        if a == b {
+                                                            match last_tokens[4].token_type {
+                                                                BFTokenType::LoopStart(_) => {
+                                                                    ret_token = BFTokenType::AddCurrentDown(x);
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    tokens.pop();
+                                                                    pos-=5;
+                                                                },
+                                                                _ => {}
+                                                            }
+                                                        }
+                                                    },
+                                                    _ => { }
+                                                }
+                                            }
+                                        },
+                                        _ => { }
+                                    }
+                                }, 
+                                _ => { }
+                            };
+                        },
+                        
+                        // Empty Loop
+                        BFTokenType::LoopStart(_) => {
+                            tokens.pop();
+                            pos-=1;
+                            continue;
+                        }
+                        _ => { }
+                    }
+                    
+                    ret_token
                 },
 
                 // BF is a very simple language - if there is an 
@@ -129,13 +233,24 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                 _ => continue
             };
 
+            let mut i = 1;
+            // Recopy them instead of shifting as they may have chagned.
+            while i < 5 && pos > i-1 {
+                last_tokens[i] = tokens[pos-i].clone();
+                i+=1;
+            }
+
             pos+=1;
 
             // Add it to the list of tokens
             let token = BFToken { token_type : token_type, pos : pos};
-            last_token = token.clone();
+
+            last_tokens[0] = token.clone();
+
             tokens.push(token);
         }
+
+        //bf_optim::optimise(&mut tokens);
 
         // No way for this to currently fail.
         LexResult::Success(tokens)

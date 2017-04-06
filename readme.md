@@ -1,6 +1,7 @@
 # Rust-Brainfuck
 
 A simple Rust brainfuck interpreter written in rust.
+Note that this has currently only been tested on Linux.
 
 ## Brainfuck
 
@@ -42,6 +43,8 @@ Each memory cell is a signed byte, the `+` and `-` routines wrap (pointer routin
 It will run mandlebrot and Towers of Hanoi, albeit quite slowly.
 
 Comments in files are currently only supported via unused characters or a `[ ]` block at the start to skip over the contents if they contain any characters such as periods that need to be ignored.
+
+Unknown Windows or OSX support.
 
 ## Missing Features
 

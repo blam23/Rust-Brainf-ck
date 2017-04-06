@@ -1,6 +1,6 @@
 # Rust-Brainfuck
 
-A simple Rust brainfuck interpreter written in rust.
+A simple Rust brainfuck interpreter written in Rust.  
 Note that this has currently only been tested on Linux.
 
 ## Brainfuck

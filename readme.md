@@ -1,10 +1,17 @@
-# BF-CLI 
+# Rust-Brainfuck
 
 A simple Rust brainfuck interpreter written in rust.
 
-## Usage Examples:
+## Brainfuck
 
-### Interpreting a bf file:
+Brainfuck is a very simple language, the best description of which I think can be found [here](https://esolangs.org/wiki/Brainfuck).
+
+A cool list of programs written in Brainfuck is available [here](http://esoteric.sange.fi/brainfuck/bf-source/prog/).
+I reccomend the hanoi.bf script or the mandelbrot.bf script! 
+
+## Usage Examples
+
+### Interpreting a bf file
 
 `bf-cli helloworld.bf`
 

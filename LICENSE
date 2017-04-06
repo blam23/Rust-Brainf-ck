@@ -1,7 +1,5 @@
 MIT License
 
-This license covers all files except for those in the [test scripts](https://github.com/elliotharris/Rust-Brainf-ck/tree/master/bf-cli/test-scripts) directory. 
-
 Copyright (c) 2017 Elliot Harris
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

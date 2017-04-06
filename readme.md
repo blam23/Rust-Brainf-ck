@@ -9,6 +9,9 @@ Brainfuck is a very simple language, the best description of which I think can b
 A cool list of programs written in Brainfuck is available [here](http://esoteric.sange.fi/brainfuck/bf-source/prog/).
 I reccomend the hanoi.bf script or the mandelbrot.bf script! 
 
+![hanoi](https://cloud.githubusercontent.com/assets/1008996/24750668/98c476ec-1abe-11e7-9008-1919fecc499d.png)
+![mandelbrot](https://cloud.githubusercontent.com/assets/1008996/24751578/0bbd3bfe-1ac2-11e7-970b-2f5652aac4d6.png)
+
 ## Usage Examples
 
 ### Interpreting a bf file

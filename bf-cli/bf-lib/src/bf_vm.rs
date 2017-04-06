@@ -94,16 +94,16 @@ impl BFVM {
         match token.token_type {
 
             // >    Increments data pointer
-            BFTokenType::IncrementPtr => self.data_ptr+=1,
+            BFTokenType::IncrementPtr(x) => self.data_ptr+=x,
 
             // <    Decrements data pointer
-            BFTokenType::DecrementPtr => self.data_ptr-=1,
+            BFTokenType::DecrementPtr(x) => self.data_ptr-=x,
 
             // +    Wrapping adds 1 to cell that data pointer is pointing to
-            BFTokenType::IncrementData => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add(1),
+            BFTokenType::IncrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add(x),
 
             // -    Wrapping subtracts 1 from cell
-            BFTokenType::DecrementData => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub(1),
+            BFTokenType::DecrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub(x),
 
             // .    Prints the current cell as a character to stdout (65 - A)
             BFTokenType::Output => {

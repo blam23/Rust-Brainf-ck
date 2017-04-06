@@ -48,7 +48,8 @@ impl Lexer<Vec<BFToken>> for BFLexer {
             // Match our character to a TokenType.
             let token_type = match character {
                 '>' => {
-                     let mut new_x = 1;
+                    // Batch up all the '>' tokens
+                    let mut new_x = 1;
                     if last_token.pos > 0 {
                         match last_token.token_type {
                             BFTokenType::IncrementPtr(x) => {
@@ -62,7 +63,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                     BFTokenType::IncrementPtr(new_x)
                 },
                 '<' => {
-                     let mut new_x = 1;
+                    let mut new_x = 1;
                     if last_token.pos > 0 {
                         match last_token.token_type {
                             BFTokenType::DecrementPtr(x) => {

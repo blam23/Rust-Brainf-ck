@@ -1,2 +1,4 @@
 output.txt
+build.sh
 *.sublime-*
+bf-cli/test-scripts/*.bf

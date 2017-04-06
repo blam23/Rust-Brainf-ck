@@ -3,6 +3,7 @@ extern crate bf_lib;
 use bf_lib::traits::*;
 use bf_lib::bf_lexer::BFLexer;
 use bf_lib::bf_vm::BFVM;
+use bf_lib::bf_vm::VMSettings;
 use std::process;
 
 use std::fs::File;
@@ -27,11 +28,14 @@ Rust BrainFuck Interpreter
 
 Usage:
     bf-cli <file>
+    bf-cli <file> -u
     bf-cli ( -f | --file ) <file>
     bf-cli ( -s | --str ) <bfstring>
 
 Options:
-    -h --help   Shows this screen.
+    -h --help       Shows this screen.
+    -u --usermode   Input is prompted for.
+    -c --charmode   Input is converted from char to byte (A -> 65)
 ");
 }
 
@@ -41,6 +45,7 @@ fn main() {
     '---------------------------------------------------- */
     let mut mode = ArgumentMode::Skip;
     let mut input = String::new();
+    let mut settings = VMSettings::new();
     for argument in std::env::args() {
         match mode {
             ArgumentMode::Skip => mode = ArgumentMode::Start,
@@ -51,12 +56,20 @@ fn main() {
                     "-h" | "--help" => {
                         print_help();
                         process::exit(1);
-                    }
+                    },
+                    "-u" | "--usermode" => settings.prompt_for_input = true,
+                    "-c" | "--charmode" => settings.input_as_char = true,
                     _ => read_file(argument, &mut input)
                 };
             },
-            ArgumentMode::Str => input = argument,
-            ArgumentMode::File => read_file(argument, &mut input)
+            ArgumentMode::Str => {
+                input = argument;
+                mode = ArgumentMode::Start;
+            },
+            ArgumentMode::File => { 
+                read_file(argument, &mut input);
+                mode = ArgumentMode::Start;
+            },
         }
     }
 
@@ -65,7 +78,7 @@ fn main() {
     |    Interpret and Run Input                          |
     '---------------------------------------------------- */
     let tokens = BFLexer::parse(String::from(input));
-    let mut bfvm = BFVM::new();
+    let mut bfvm = BFVM::new(settings);
 
     let result = match tokens {
         LexResult::Success(t) => bfvm.run(t),

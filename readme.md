@@ -34,7 +34,7 @@ or
 ## Compatibilty
 
 It should be able to run all standard BF programs - It has an increased memory size of 60k bytes and starts at the 30k mark to support various programs that "go backwards". 
-Each memory cell is a byte, the `+` and `-` routines wrap (pointer routines do not).
+Each memory cell is a signed byte, the `+` and `-` routines wrap (pointer routines do not).
 
 It will run mandlebrot and Towers of Hanoi, albeit quite slowly.
 

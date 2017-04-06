@@ -34,8 +34,6 @@ pub struct BFLexer {
 
 impl Lexer<Vec<BFToken>> for BFLexer {
 
-
-
     fn parse(input_string:String) -> LexResult<Vec<BFToken>> {
         // Create empty vector
         let mut tokens : Vec<BFToken> = vec![];

@@ -46,7 +46,6 @@ fn main() {
     let mut input = String::new();
     let mut settings = VMSettings::new();
     for argument in std::env::args() {
-        println!("Mode: {:?}, Arg: {}", mode, argument);
         match mode {
             ArgumentMode::Skip => mode = ArgumentMode::Start,
             ArgumentMode::Start => { 

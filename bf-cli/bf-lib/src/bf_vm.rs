@@ -107,6 +107,7 @@ impl BFVM {
 
             // .    Prints the current cell as a character to stdout (65 - A)
             BFTokenType::Output => {
+                // Write current cell to stdout as a byte
                 let data = &[self.mem[self.data_ptr] as u8];
                 writer.write(data).expect("Unable to write to STDOUT");
             },
@@ -117,6 +118,7 @@ impl BFVM {
                     print!("\n> ");
                     io::stdout().flush().ok().expect("Could not flush stdout");
                 }
+                // Read one byte from stdin as a signed byte and store it
                 let mut buffer = [0u8; 1];
                 reader.read(&mut buffer[..]).expect("Unable to read from STDIN");
                 self.mem[self.data_ptr] = buffer[0] as i8;

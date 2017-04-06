@@ -135,65 +135,16 @@ impl BFVM {
             },
 
             // [     If current data cell is 0 skip to matching ]
-            BFTokenType::LoopStart => {
+            BFTokenType::LoopStart(x) => {
                 if self.mem[self.data_ptr] == 0 {
-
-                    // Depth is used to match an open bracket to the right close bracket.
-                    //  If we have:
-                    //    [.,[++[+]++.,]-]
-                    //       ^
-                    //  we need to skip over the inner [+] and find the next close bracket
-                    //  that does not have an open bracket preceding it, ex:
-                    //
-                    //    [.,[++[+]++.,]-]
-                    //       ^---------^
-                    //
-                    //  Depth will be:
-                    //    [.,[++[+]++.,]-]
-                    //       11122111110
-
-                    let mut depth = 1;
-
-                    // TODO: Make this efficient
-                    //   Use a stack?
-
-                    while depth > 0 {
-                        self.inst_ptr+=1;
-                        if data[self.inst_ptr].token_type == BFTokenType::LoopStart {
-                            depth+=1;
-                        } else if data[self.inst_ptr].token_type == BFTokenType::LoopEnd {
-                            depth-=1;
-                        }
-                        if self.inst_ptr >= data.len() {
-                            return VMResult::Error { message : String::from("Bracket mismatch - Could not find matching ]") }
-                        }
-                    }
+                    self.inst_ptr = x;
                 }
             },
 
             // ]     If current data cell isn't 0 skip to matching [
-            BFTokenType::LoopEnd => {
+            BFTokenType::LoopEnd(x) => {
                 if self.mem[self.data_ptr] != 0 {
-
-                    // This is done the same way as LoopStart but going backwards
-
-                    let mut depth = 1;
-
-                    // TODO: Make this efficient
-                    //   Use a stack?
-
-                    while depth > 0 {
-                        self.inst_ptr-=1;
-                        if data[self.inst_ptr].token_type == BFTokenType::LoopEnd {
-                            depth+=1;
-                        } else if data[self.inst_ptr].token_type == BFTokenType::LoopStart {
-                            depth-=1;
-                        } else if self.inst_ptr == 0 {
-                            return VMResult::Error { message : String::from("Bracket mismatch - Could not find matching [") }
-                        }
-                    }
-                    // return immediately to skip adding 1 to instruction ptr
-                    return VMResult::Success;
+                    self.inst_ptr = x;
                 }
             }
         }

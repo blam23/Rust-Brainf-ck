@@ -48,10 +48,6 @@ Comments in files are currently only supported via unused characters or a `[ ]` 
 
 Unknown Windows or OSX support.
 
-## Missing Features
-
- - No real support for reading a file via `,`
-
 ### Improvements That Could Be Made
 
  - JIT compilation

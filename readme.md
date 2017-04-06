@@ -49,8 +49,6 @@ Comments in files are currently only supported via unused characters or a `[ ]` 
 
 ### Improvements That Could Be Made
 
- - Mode for differentiating reading from a file or teminal
- - Storing loop start / end for quicker looping
- - JIT compilation (would fix above too)
+ - JIT compilation
 
 

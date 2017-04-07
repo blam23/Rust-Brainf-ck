@@ -1,6 +1,7 @@
 output.txt
 build.sh
 release-build.sh
+test.txt
 dbg-bf-cli
 rel-bf-cli
 *.sublime-*

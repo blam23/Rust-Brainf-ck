@@ -140,12 +140,19 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                         // These loops will add the current cell value 
                         //  to the cell value offset by the amount of
                         //  ptr increments '>' and '<'.
+                        // As it adds to the offset cell, it takes from
+                        //  the current cell. This will loop until the 
+                        //  current cell is 0.
+                        // So it can be equated to addition and setting
+                        //  the current value to 0
                         //
                         // Examples:
                         //
                         //  [->+<]         adds mem[current] to mem[current+1]
+                        //                 sets mem[current] to 0
                         //
                         //  [->>>>+<<<<]   adds mem[current] to mem[current+4]
+                        //                 sets mem[current] to 0
                         //
                         // Note that due to the combination optimisation
                         //  this only needs to check for [->+<] or [-<+>]

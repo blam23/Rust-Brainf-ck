@@ -7,6 +7,9 @@ use bf_lib::bf_lexer::BFLexer;
 use bf_lib::bf_vm::BFVM;
 use bf_lib::bf_vm::VMSettings;
 
+// Import from token printing script
+use bf_lib::bf_output::*;
+
 // Import various STD library components
 use std::process;
 use std::fs::File;
@@ -19,6 +22,7 @@ enum ArgumentMode {
     Start,
     Str,
     File,
+    Dump,
 }
 
 // Reads a file and puts the contents into the out_str String.
@@ -41,8 +45,9 @@ Usage:
     bf-cli ( -s | --str ) <bfstring>
 
 Options:
-    -h --help       Shows this screen.
-    -u --usermode   Input is prompted for.
+    -h --help                Shows this screen.
+    -u --usermode            Input is prompted for.
+    -d --dumpout <out_file>  Dumps the bf out in an optimised format
 ");
 }
 
@@ -54,33 +59,42 @@ fn main() {
     // Argument Setup - Skip first argument as it's the binary location.
     let mut mode = ArgumentMode::Skip;
     let mut input = String::new();
+    let mut dump_out = false;
+    let mut dump_out_file = String::new();
     let mut settings = VMSettings::new();
 
     // Loop through each argument and set various settings as per the state
     // Aka if in Str mode the next argument will be considered the input.
     for argument in std::env::args() {
+        use self::ArgumentMode::*;
         match mode {
-            ArgumentMode::Skip => mode = ArgumentMode::Start,
-            ArgumentMode::Start => { 
+            Skip => mode = Start,
+            Start => { 
                 match argument.as_ref() {
-                    "-s" | "--str" => mode = ArgumentMode::Str,
-                    "-f" | "--file" => mode = ArgumentMode::File,
+                    "-s" | "--str" => mode = Str,
+                    "-f" | "--file" => mode = File,
                     "-h" | "--help" => {
                         print_help();
                         process::exit(1);
                     },
                     "-u" | "--usermode" => settings.prompt_for_input = true,
+                    "-d" | "--dumpout" => mode = Dump,
                     _ => read_file(argument, &mut input)
                 };
             },
-            ArgumentMode::Str => {
+            Str => {
                 input = argument;
-                mode = ArgumentMode::Start;
+                mode = Start;
             },
-            ArgumentMode::File => { 
+            File => { 
                 read_file(argument, &mut input);
-                mode = ArgumentMode::Start;
+                mode = Start;
             },
+            Dump => {
+                dump_out = true;
+                dump_out_file = argument;
+                mode = Start;
+            }
         }
     }
 
@@ -100,7 +114,12 @@ fn main() {
     //  otherwise Error
     // Currently parsing can't fail.
     let result = match tokens {
-        LexResult::Success(t) => bfvm.run(t),
+        LexResult::Success(t) => {
+            if dump_out {
+                dump_tokens(t.clone(), dump_out_file);
+            }
+            bfvm.run(t)
+        }
         _ =>  {
             println!("Error !");
             VMResult::Error { message : String::from("Uh oh") }

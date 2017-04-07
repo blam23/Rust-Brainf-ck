@@ -136,7 +136,19 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                             }
                         },
 
-                        //  Optimisation for [-<+>] or [->+<] pattern.
+                        // Optimisation for [-<+>] or [->+<] pattern.
+                        // These loops will add the current cell value 
+                        //  to the cell value offset by the amount of
+                        //  ptr increments '>' and '<'.
+                        //
+                        // Examples:
+                        //
+                        //  [->+<] adds mem[current] to mem[current+1]
+                        //
+                        //  [->>>>+<<<<<] adds mem[current] to mem[current+4]
+                        //
+                        // Note that due to the combination optimisation
+                        //  this only needs to check for [->+<] or [-<+>]
                         DecrementPtr(x)
                         | IncrementPtr(x) => {
                             if let IncrementData(a) = last_tokens[1].token_type {

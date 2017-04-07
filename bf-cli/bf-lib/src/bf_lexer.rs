@@ -123,6 +123,10 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                     // Update it's data position to this ] token
                     tokens[index].token_type = LoopStart(pos);
 
+                    // Lots of optimisations can be done when you have a loop.
+                    //  At this point the lexer knows all the components of the
+                    //  loop and can optimise out common loop patterns into single
+                    //  instruction calls.
                     match last_tokens[0].token_type {
                         // This currently checks for [-] or [+] and replaces 
                         //  those with a set current cell to 0 instruction.
@@ -149,6 +153,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                             }
                         },
 
+                        // TODO: Multiplication detection & optimisation?
                         // Optimisation for [-<+>] or [->+<] pattern.
                         // These loops will add the current cell value 
                         //  to the cell value offset by the amount of
@@ -220,7 +225,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
 
             let mut i = 1;
             // Recopy last tokens instead of shifting as they 
-            //  may have chagned.
+            //  may have changed due to optimisations.
             while i < 5 && pos > i-1 {
                 last_tokens[i] = tokens[pos-i].clone();
                 i+=1;

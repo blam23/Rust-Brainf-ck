@@ -42,7 +42,7 @@ or
 It should be able to run all standard BF programs - It has an increased memory size of 60k bytes and starts at the 30k mark to support various programs that "go backwards". 
 Each memory cell is a signed byte, the `+` and `-` routines wrap (pointer routines do not).
 
-It will run mandlebrot and Towers of Hanoi, although Towers of Hanoi runs a bit too quick to see what's going on!
+It will run mandlebrot and Towers of Hanoi, although Towers of Hanoi runs a bit too quick to see what's going on! (try running it on a debug build to slow it down)
 
 Comments in files are currently only supported via unused characters or a `[ ]` block at the start to skip over the contents if they contain any characters such as periods that need to be ignored.
 

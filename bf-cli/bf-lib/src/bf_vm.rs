@@ -152,13 +152,13 @@ impl BFVM {
 
             // Optimisation - Adds current cell contents to cell offset by +x
             AddCurrentUp(x) => {
-                self.mem[self.data_ptr + x] += self.mem[self.data_ptr];
+                self.mem[self.data_ptr + x] = self.mem[self.data_ptr + x].wrapping_add(self.mem[self.data_ptr]);
                 self.mem[self.data_ptr] = 0;
             },
 
             // Optimisation - Adds current cell contents to cell offset by -x
             AddCurrentDown(x) => {
-                self.mem[self.data_ptr - x] += self.mem[self.data_ptr];
+                self.mem[self.data_ptr - x] = self.mem[self.data_ptr - x].wrapping_add(self.mem[self.data_ptr]);
                 self.mem[self.data_ptr] = 0;
             }
         }

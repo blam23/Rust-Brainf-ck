@@ -5,4 +5,4 @@ test.txt
 dbg-bf-cli
 rel-bf-cli
 *.sublime-*
-bf-cli/test-scripts/*.bf
+bf-cli/test-scripts/*

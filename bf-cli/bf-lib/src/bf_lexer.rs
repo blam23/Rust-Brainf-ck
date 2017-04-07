@@ -21,6 +21,7 @@ pub enum BFTokenType {
     AddCurrentDown(usize)     // Adds current cell to cell in [current - value]
 }
 
+
 #[derive(Clone, Debug, Copy)]
 pub struct BFToken {
     pub token_type : BFTokenType,
@@ -35,6 +36,10 @@ pub struct BFLexer {
 impl Lexer<Vec<BFToken>> for BFLexer {
 
     fn parse(input_string:String) -> LexResult<Vec<BFToken>> {
+        // Import enum -> Allows for using enum values without
+        //  BFTokenType:: prefix
+        use self::BFTokenType::*;
+
         // Create empty vector
         let mut tokens : Vec<BFToken> = vec![];
 
@@ -48,7 +53,7 @@ impl Lexer<Vec<BFToken>> for BFLexer {
 
         // Store the previous 5 tokens, these are used
         //  for optimisations.
-        let mut last_tokens = [BFToken { pos : 0, token_type : BFTokenType::Input }; 5];
+        let mut last_tokens = [BFToken { pos : 0, token_type : Input }; 5];
 
         // Loop through each character
         for character in input_string.chars() {
@@ -58,141 +63,118 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                     // Batch up all the '>' tokens
                     let mut new_x = 1;
                     if last_tokens[0].pos > 0 {
-                        match last_tokens[0].token_type {
-                            BFTokenType::IncrementPtr(x) => {
-                                tokens.pop();
-                                pos-=1;
-                                new_x += x;
-                            },
-                            _ => {}
+                        if let IncrementPtr(x) = last_tokens[0].token_type {
+                            tokens.pop();
+                            pos-=1;
+                            new_x += x;
                         }
                     }
-                    BFTokenType::IncrementPtr(new_x)
+                    IncrementPtr(new_x)
                 },
                 '<' => {
                     let mut new_x = 1;
                     if last_tokens[0].pos > 0 {
-                        match last_tokens[0].token_type {
-                            BFTokenType::DecrementPtr(x) => {
-                                tokens.pop();
-                                pos-=1;                             
-                                new_x += x;                           
-                            },
-                            _ => {}
+                        if let DecrementPtr(x) = last_tokens[0].token_type {
+                            tokens.pop();
+                            pos-=1;                             
+                            new_x += x;                           
                         }
                     }
-                    BFTokenType::DecrementPtr(new_x)
+                    DecrementPtr(new_x)
                 },
                 '+' =>  {
                     let mut new_x = 1;
                     if last_tokens[0].pos > 0 {
-                        match last_tokens[0].token_type {
-                            BFTokenType::IncrementData(x) => {
-                                tokens.pop();
-                                pos-=1;
-                                new_x += x;
-                            },
-                            _ => {}
+                        if let IncrementData(x) = last_tokens[0].token_type {
+                            tokens.pop();
+                            pos-=1;
+                            new_x += x;
                         }
                     }
-                    BFTokenType::IncrementData(new_x)
+                    IncrementData(new_x)
                 },
                 '-' => {
                     let mut new_x = 1;
                     if last_tokens[0].pos > 0 {
-                        match last_tokens[0].token_type {
-                            BFTokenType::DecrementData(x) => {
-                                tokens.pop();
-                                pos-=1;
-                                new_x += x;
-                            },
-                            _ => {}
+                        if let DecrementData(x) = last_tokens[0].token_type {
+                            tokens.pop();
+                            pos-=1;
+                            new_x += x;
                         }
                     }
-                    BFTokenType::DecrementData(new_x)
+                    DecrementData(new_x)
                 },
-                '.' => BFTokenType::Output,
-                ',' => BFTokenType::Input,
+                '.' => Output,
+                ',' => Input,
                 '[' => {
                     // Push this pos onto stack
                     loop_stack.push(pos);
 
                     // Store temp value of 0 for now - will be updated
                     //  once we know matching ]
-                    BFTokenType::LoopStart(0)
+                    LoopStart(0)
                 },
                 ']' => {
 
                     // Get matching bracket.
                     let index = loop_stack.pop().expect("Bracket mismatch");
-                    let mut ret_token : BFTokenType = BFTokenType::LoopEnd(index);      
+                    let mut ret_token : BFTokenType = LoopEnd(index);      
 
                     // Update it's data position to this ] token
-                    tokens[index].token_type = BFTokenType::LoopStart(pos);
+                    tokens[index].token_type = LoopStart(pos);
 
                     match last_tokens[0].token_type {
                         // This currently checks for [-] or [+] and replaces 
                         //  those with a set current cell to 0 instruction.
-                        BFTokenType::IncrementData(_) 
-                        | BFTokenType::DecrementData(_) => {
-                            match last_tokens[1].token_type {
-                                BFTokenType::LoopStart(_) => {
-                                    ret_token = BFTokenType::SetCurrent(0);
-                                    tokens.pop();
-                                    tokens.pop();
-                                    pos-=2;
-                                },
-                                _ => { }
+                        IncrementData(_) 
+                        | DecrementData(_) => {
+                            if let LoopStart(_) = last_tokens[1].token_type {
+                                ret_token = SetCurrent(0);
+                                tokens.pop();
+                                tokens.pop();
+                                pos-=2;
                             }
                         },
 
                         //  Optimisation for [-<+>] or [->+<] pattern.
-                        BFTokenType::DecrementPtr(x)
-                        | BFTokenType::IncrementPtr(x) => {
-                            match last_tokens[1].token_type {
-                                BFTokenType::IncrementData(a) => {
-                                    match last_tokens[2].token_type {
-                                        BFTokenType::IncrementPtr(y)
-                                        | BFTokenType::DecrementPtr(y) => {
-                                             if x == y {
-                                                match last_tokens[3].token_type {
-                                                    BFTokenType::DecrementData(b) => {
-                                                        if a == b {
-                                                            match last_tokens[4].token_type {
-                                                                BFTokenType::LoopStart(_) => {
-                                                                    if last_tokens[0].token_type == BFTokenType::DecrementPtr(x) {
-                                                                        ret_token = BFTokenType::AddCurrentUp(x);
-                                                                    } else {
-                                                                        ret_token = BFTokenType::AddCurrentDown(x);
-                                                                    }
-                                                                    tokens.pop();
-                                                                    tokens.pop();
-                                                                    tokens.pop();
-                                                                    tokens.pop();
-                                                                    tokens.pop();
-                                                                    pos-=5;
-                                                                },
-                                                                _ => {}
-                                                            }
+                        DecrementPtr(x)
+                        | IncrementPtr(x) => {
+                            if let IncrementData(a) = last_tokens[1].token_type {
+                                match last_tokens[2].token_type {
+                                    IncrementPtr(y)
+                                    | DecrementPtr(y) => {
+                                        if x == y {
+                                            if let DecrementData(b) = last_tokens[3].token_type  {
+                                                if a == b {
+                                                    if let LoopStart(_) = last_tokens[4].token_type {
+                                                        if last_tokens[0].token_type == DecrementPtr(x) {
+                                                            ret_token = AddCurrentUp(x);
+                                                        } else {
+                                                            ret_token = AddCurrentDown(x);
                                                         }
-                                                    },
-                                                    _ => { }
+                                                        tokens.pop();
+                                                        tokens.pop();
+                                                        tokens.pop();
+                                                        tokens.pop();
+                                                        tokens.pop();
+                                                        pos-=5;
+                                                    }
                                                 }
                                             }
-                                        },
-                                        _ => { }
-                                    }
-                                }, 
-                                _ => { }
+                                        }
+                                    },
+                                    _ => { }
+                                }
                             };
                         },
                         
                         // Empty Loop
-                        BFTokenType::LoopStart(_) => {
+                        LoopStart(_) => {
                             tokens.pop();
                             pos-=1;
                             continue;
-                        }
+                        },
+                        
                         _ => { }
                     }
                     

@@ -91,32 +91,36 @@ impl BFVM {
 
     // Interprets the current token.
     pub fn step(&mut self, data : &Vec<BFToken>, reader : &mut io::Stdin, writer : &mut io::Stdout) -> VMResult {
+        // Import enum -> Allows for using enum values without
+        //  BFTokenType:: prefix
+        use bf_lexer::BFTokenType::*;
+        
         // Get the current token
         let token = &data[self.inst_ptr];
 
         match token.token_type {
 
             // >    Increments data pointer
-            BFTokenType::IncrementPtr(x) => self.data_ptr+=x,
+            IncrementPtr(x) => self.data_ptr+=x,
 
             // <    Decrements data pointer
-            BFTokenType::DecrementPtr(x) => self.data_ptr-=x,
+            DecrementPtr(x) => self.data_ptr-=x,
 
             // +    Wrapping adds 1 to cell that data pointer is pointing to
-            BFTokenType::IncrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add((x % 255) as i8),
+            IncrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_add((x % 255) as i8),
 
             // -    Wrapping subtracts 1 from cell
-            BFTokenType::DecrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub((x % 255) as i8),
+            DecrementData(x) => self.mem[self.data_ptr] = self.mem[self.data_ptr].wrapping_sub((x % 255) as i8),
 
             // .    Prints the current cell as a character to stdout (65 - A)
-            BFTokenType::Output => {
+            Output => {
                 // Write current cell to stdout as a byte
                 let data = &[self.mem[self.data_ptr] as u8];
                 writer.write(data).expect("Unable to write to STDOUT");
             },
 
             // ,    Reads input from stdin and puts it into current cell
-            BFTokenType::Input => {
+            Input => {
                 if self.settings.prompt_for_input {
                     print!("\n> ");
                     io::stdout().flush().ok().expect("Could not flush stdout");
@@ -128,32 +132,32 @@ impl BFVM {
             },
 
             // [     If current data cell is 0 skip to matching ]
-            BFTokenType::LoopStart(x) => {
+            LoopStart(x) => {
                 if self.mem[self.data_ptr] == 0 {
                     self.inst_ptr = x;
                 }
             },
 
             // ]     If current data cell isn't 0 skip to matching [
-            BFTokenType::LoopEnd(x) => {
+            LoopEnd(x) => {
                 if self.mem[self.data_ptr] != 0 {
                     self.inst_ptr = x;
                 }
             },
 
             // Optimisation - Sets current cell to 0
-            BFTokenType::SetCurrent(x) => {
+            SetCurrent(x) => {
                 self.mem[self.data_ptr] = x;
             },
 
             // Optimisation - Adds current cell contents to cell offset by +x
-            BFTokenType::AddCurrentUp(x) => {
+            AddCurrentUp(x) => {
                 self.mem[self.data_ptr + x] += self.mem[self.data_ptr];
                 self.mem[self.data_ptr] = 0;
             },
 
             // Optimisation - Adds current cell contents to cell offset by -x
-            BFTokenType::AddCurrentDown(x) => {
+            AddCurrentDown(x) => {
                 self.mem[self.data_ptr - x] += self.mem[self.data_ptr];
                 self.mem[self.data_ptr] = 0;
             }

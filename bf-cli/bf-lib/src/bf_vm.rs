@@ -145,9 +145,14 @@ impl BFVM {
                 }
             },
 
-            // Optimisation - Sets current cell to 0
-            SetCurrent(x) => {
-                self.mem[self.data_ptr] = x;
+            // Optimisation - Sets current cells to 0
+            SetBlock(x, y) => {
+                let mut i = 0;
+                while i < x {
+                    self.mem[self.data_ptr + i] = y;
+                    i+=1;
+                };
+                self.data_ptr += x-1;
             },
 
             // Optimisation - Adds current cell contents to cell offset by +x

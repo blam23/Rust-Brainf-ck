@@ -16,7 +16,7 @@ pub enum BFTokenType {
     LoopEnd(usize),           // ]
 
     // Optimised instructions
-    SetCurrent(i8),           // Sets the current cell to value
+    SetBlock(usize,i8),        // Sets blocks of sells to value
     AddCurrentUp(usize),      // Adds current cell to cell in [current + value]
     AddCurrentDown(usize)     // Adds current cell to cell in [current - value]
 }
@@ -126,10 +126,23 @@ impl Lexer<Vec<BFToken>> for BFLexer {
                     match last_tokens[0].token_type {
                         // This currently checks for [-] or [+] and replaces 
                         //  those with a set current cell to 0 instruction.
+                        // It also looks for a [-]>[-] type pattern where
+                        //  multiple cells are set to 0
                         IncrementData(_) 
                         | DecrementData(_) => {
                             if let LoopStart(_) = last_tokens[1].token_type {
-                                ret_token = SetCurrent(0);
+                                let mut size = 1;
+                                // Check for blocks
+                                if let IncrementPtr(1) = last_tokens[2].token_type {
+                                    if let SetBlock(x, 0) = last_tokens[3].token_type {
+                                        size = x + 1;
+                                        tokens.pop();
+                                        tokens.pop();
+                                        pos-=2;
+                                    };
+                                }
+
+                                ret_token = SetBlock(size, 0);
                                 tokens.pop();
                                 tokens.pop();
                                 pos-=2;
